@@ -1,5 +1,7 @@
 package org.example.userauthservice.services;
 
+import org.example.userauthservice.models.Role;
+import org.example.userauthservice.models.State;
 import org.example.userauthservice.models.User;
 import org.example.userauthservice.repos.RoleRepo;
 import org.example.userauthservice.repos.UserRepo;
@@ -7,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -38,6 +42,22 @@ public class AuthService {
         user.setName(name);
         user.setPassword(bCryptPasswordEncoder.encode(password));
         user.setPhoneNumber(phoneNumber);
+
+        //check and assign role
+        Role role = null;
+        Optional<Role> roleOptional = roleRepo.findRoleByValue("NON_ADMIN");
+        if(roleOptional.isEmpty()) {
+            role = new Role();
+            role.setState(State.ACTIVE);
+            role.setCreatedAt(new Date());
+            role.setValue("NON_ADMIN");
+            roleRepo.save(role);
+        } else {
+            role = roleOptional.get();
+        }
+        List<Role> roles = new ArrayList<>();
+        roles.add(role);
+        user.setRoles(roles);
 
         return  userRepo.save(user);
     }
