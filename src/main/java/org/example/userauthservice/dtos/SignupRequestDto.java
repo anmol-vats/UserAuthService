@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 public class SignupRequestDto {
     private String name;
-    private String emailId;
+    private String email;
     private String password;
     private String phoneNumber;
 }

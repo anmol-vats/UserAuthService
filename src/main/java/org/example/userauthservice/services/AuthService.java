@@ -40,6 +40,7 @@ public class AuthService {
         user.setEmailId(emailId);
         user.setCreatedAt(new Date());
         user.setName(name);
+        user.setState(State.ACTIVE);
         user.setPassword(bCryptPasswordEncoder.encode(password));
         user.setPhoneNumber(phoneNumber);
 
