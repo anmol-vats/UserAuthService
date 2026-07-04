@@ -1,5 +1,8 @@
 package org.example.userauthservice.services;
 
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.MacAlgorithm;
+import org.antlr.v4.runtime.misc.Pair;
 import org.example.userauthservice.models.Role;
 import org.example.userauthservice.models.State;
 import org.example.userauthservice.models.User;
@@ -9,10 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import javax.crypto.SecretKey;
+import java.util.*;
 
 @Service
 public class AuthService {
@@ -63,7 +64,7 @@ public class AuthService {
         return  userRepo.save(user);
     }
 
-    public User login(String email,  String password) {
+    public Pair<User, String> login(String email, String password) {
         Optional<User> userOptional = userRepo.findByEmailId(email);
         if(userOptional.isEmpty()) {
             throw new RuntimeException("Please Signup first");
@@ -75,6 +76,26 @@ public class AuthService {
             throw new RuntimeException("Wrong password");
         }
 
-        return  user;
+        //generate token
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("userId", user.getId());
+        List<String> roleStrings = new ArrayList<>();
+        for (Role role : user.getRoles()) {
+            roleStrings.add(role.getValue());
+        }
+        payload.put("permissions", roleStrings);
+        Long currentTimeInMillis = System.currentTimeMillis();
+        payload.put("createdAt", currentTimeInMillis);
+        payload.put("expire", currentTimeInMillis+10000);
+        payload.put("issued_by", "engineer");
+
+        MacAlgorithm macAlgorithm = Jwts.SIG.HS256;
+        SecretKey secretKey = macAlgorithm.key().build();
+
+        String token = Jwts.builder().claims(payload).signWith(secretKey).compact();
+
+
+
+        return new Pair<>(user, token);
     }
 }
