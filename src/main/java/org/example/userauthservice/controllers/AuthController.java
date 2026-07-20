@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.misc.Pair;
 import org.example.userauthservice.dtos.LoginRequestDto;
 import org.example.userauthservice.dtos.SignupRequestDto;
 import org.example.userauthservice.dtos.UserDto;
+import org.example.userauthservice.dtos.ValidateTokenRequestDto;
 import org.example.userauthservice.models.Role;
 import org.example.userauthservice.models.User;
 import org.example.userauthservice.services.AuthService;
@@ -49,6 +50,11 @@ public class AuthController {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add(HttpHeaders.SET_COOKIE, token);
         return new ResponseEntity<>(userDto, headers, HttpStatus.OK);
+    }
+
+    @PostMapping
+    public Boolean validateToken(@RequestBody ValidateTokenRequestDto validateTokenRequestDto){
+        return authService.validateToken(validateTokenRequestDto.getToken());
     }
 
     public UserDto from(User user){

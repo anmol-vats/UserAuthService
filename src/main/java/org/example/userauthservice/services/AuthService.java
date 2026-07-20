@@ -4,9 +4,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.MacAlgorithm;
 import org.antlr.v4.runtime.misc.Pair;
 import org.example.userauthservice.models.Role;
+import org.example.userauthservice.models.Session;
 import org.example.userauthservice.models.State;
 import org.example.userauthservice.models.User;
 import org.example.userauthservice.repos.RoleRepo;
+import org.example.userauthservice.repos.SessionRepo;
 import org.example.userauthservice.repos.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,6 +28,9 @@ public class AuthService {
 
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Autowired
+    private SessionRepo sessionRepo;
 
     public User signup(String name,
         String emailId,
@@ -94,8 +99,19 @@ public class AuthService {
 
         String token = Jwts.builder().claims(payload).signWith(secretKey).compact();
 
-
+        Session session = new Session();
+        session.setCreatedAt(new Date());
+        session.setToken(token);
+        session.setState(State.ACTIVE);
+        session.setUser(user);
+        sessionRepo.save(session);
 
         return new Pair<>(user, token);
+    }
+
+    public Boolean validateToken(String token){
+
+        Optional<Session> optionalSession = sessionRepo.findByToken(token);
+        return optionalSession.isPresent();
     }
 }
