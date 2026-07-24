@@ -1,8 +1,13 @@
 package org.example.userauthservice.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.MacAlgorithm;
 import org.antlr.v4.runtime.misc.Pair;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.example.userauthservice.clients.KafkaProducerClient;
+import org.example.userauthservice.dtos.EmailDto;
 import org.example.userauthservice.models.Role;
 import org.example.userauthservice.models.Session;
 import org.example.userauthservice.models.State;
@@ -31,6 +36,12 @@ public class AuthService {
 
     @Autowired
     private SessionRepo sessionRepo;
+
+    @Autowired
+    private KafkaProducerClient kafkaProducerClient;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public User signup(String name,
         String emailId,
@@ -66,6 +77,17 @@ public class AuthService {
         roles.add(role);
         user.setRoles(roles);
 
+        //message into kafka
+        EmailDto emailDto = new EmailDto();
+        emailDto.setSubject("Welcome to the portal");
+        emailDto.setBody("Have a great learning experience");
+        emailDto.setTo(emailId);
+        emailDto.setFrom("avats4000@gmail.com");
+        try {
+            kafkaProducerClient.sendMessage("signup", objectMapper.writeValueAsString(emailDto));
+        }catch(JsonProcessingException e) {
+            throw new RuntimeException(e.getMessage());
+        }
         return  userRepo.save(user);
     }
 
